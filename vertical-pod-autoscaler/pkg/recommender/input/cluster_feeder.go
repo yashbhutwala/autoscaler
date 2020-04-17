@@ -67,7 +67,7 @@ type ClusterStateFeeder interface {
 	LoadPods()
 
 	// LoadRealTimeMetrics updates clusterState with current usage metrics of containers.
-	LoadRealTimeMetrics()
+	LoadRealTimeMetrics(namespace string)
 
 	// GarbageCollectCheckpoints removes historical checkpoints that don't have a matching VPA.
 	GarbageCollectCheckpoints()
@@ -108,7 +108,7 @@ func (m ClusterStateFeederFactory) Make() *clusterStateFeeder {
 func NewClusterStateFeeder(config *rest.Config, clusterState *model.ClusterState, memorySave bool, namespace string) ClusterStateFeeder {
 	kubeClient := kube_client.NewForConfigOrDie(config)
 	podLister, oomObserver := NewPodListerAndOOMObserver(kubeClient, namespace)
-	factory := informers.NewSharedInformerFactory(kubeClient, defaultResyncPeriod)
+	factory := informers.NewSharedInformerFactoryWithOptions(kubeClient, defaultResyncPeriod, informers.WithNamespace(namespace))
 	controllerFetcher := controllerfetcher.NewControllerFetcher(config, kubeClient, factory)
 	return ClusterStateFeederFactory{
 		PodLister:           podLister,
@@ -374,8 +374,8 @@ func (feeder *clusterStateFeeder) LoadPods() {
 	}
 }
 
-func (feeder *clusterStateFeeder) LoadRealTimeMetrics() {
-	containersMetrics, err := feeder.metricsClient.GetContainersMetrics()
+func (feeder *clusterStateFeeder) LoadRealTimeMetrics(namespace string) {
+	containersMetrics, err := feeder.metricsClient.GetContainersMetrics(namespace)
 	if err != nil {
 		klog.Errorf("Cannot get ContainerMetricsSnapshot from MetricsClient. Reason: %+v", err)
 	}

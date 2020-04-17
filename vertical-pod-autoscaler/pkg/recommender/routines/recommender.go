@@ -48,7 +48,7 @@ var (
 // Recommender recommend resources for certain containers, based on utilization periodically got from metrics api.
 type Recommender interface {
 	// RunOnce performs one iteration of recommender duties followed by update of recommendations in VPA objects.
-	RunOnce()
+	RunOnce(namespace string)
 	// GetClusterState returns ClusterState used by Recommender
 	GetClusterState() *model.ClusterState
 	// GetClusterStateFeeder returns ClusterStateFeeder used by Recommender
@@ -174,7 +174,7 @@ func (r *recommender) GarbageCollect() {
 	}
 }
 
-func (r *recommender) RunOnce() {
+func (r *recommender) RunOnce(namespace string) {
 	timer := metrics_recommender.NewExecutionTimer()
 	defer timer.ObserveTotal()
 
@@ -190,7 +190,7 @@ func (r *recommender) RunOnce() {
 	r.clusterStateFeeder.LoadPods()
 	timer.ObserveStep("LoadPods")
 
-	r.clusterStateFeeder.LoadRealTimeMetrics()
+	r.clusterStateFeeder.LoadRealTimeMetrics(namespace)
 	timer.ObserveStep("LoadMetrics")
 	klog.V(3).Infof("ClusterState is tracking %v PodStates and %v VPAs", len(r.clusterState.Pods), len(r.clusterState.Vpas))
 

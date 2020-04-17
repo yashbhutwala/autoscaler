@@ -89,7 +89,7 @@ func main() {
 
 	ticker := time.Tick(*metricsFetcherInterval)
 	for range ticker {
-		recommender.RunOnce()
+		recommender.RunOnce(*namespace)
 		healthCheck.UpdateLastActivity()
 	}
 

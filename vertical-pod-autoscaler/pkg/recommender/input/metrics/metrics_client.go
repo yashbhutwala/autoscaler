@@ -43,7 +43,7 @@ type ContainerMetricsSnapshot struct {
 type MetricsClient interface {
 	// GetContainersMetrics returns an array of ContainerMetricsSnapshots,
 	// representing resource usage for every running container in the cluster
-	GetContainersMetrics() ([]*ContainerMetricsSnapshot, error)
+	GetContainersMetrics(namespace string) ([]*ContainerMetricsSnapshot, error)
 }
 
 type metricsClient struct {
@@ -58,10 +58,10 @@ func NewMetricsClient(metricsGetter resourceclient.PodMetricsesGetter) MetricsCl
 	}
 }
 
-func (c *metricsClient) GetContainersMetrics() ([]*ContainerMetricsSnapshot, error) {
+func (c *metricsClient) GetContainersMetrics(namespace string) ([]*ContainerMetricsSnapshot, error) {
 	var metricsSnapshots []*ContainerMetricsSnapshot
 
-	podMetricsInterface := c.metricsGetter.PodMetricses(k8sapiv1.NamespaceAll)
+	podMetricsInterface := c.metricsGetter.PodMetricses(namespace)
 	podMetricsList, err := podMetricsInterface.List(metav1.ListOptions{})
 	if err != nil {
 		return nil, err
